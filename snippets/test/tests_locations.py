@@ -3,7 +3,8 @@ from __future__ import unicode_literals
 import json
 from .jwt_auth_testcase import JWTAuthTestCase
 
-from snippets.models import Location
+from snippets.models import Location, Visit, User
+from datetime import datetime
 
 
 class LocationAPITest(JWTAuthTestCase):
@@ -17,7 +18,7 @@ class LocationAPITest(JWTAuthTestCase):
             "description": "Very beautiful place"
         }
 
-        Location.objects.create(**self.location_dict)
+        self.location = Location.objects.create(**self.location_dict)
 
     def test_get_all_locations(self):
         response = self.client.get("/locations", {}, content_type="application/json",
@@ -91,3 +92,44 @@ class LocationAPITest(JWTAuthTestCase):
         response = self.client.delete("/locations/1", content_type="application/json",
                                       HTTP_AUTHORIZATION=self.getJWTToken())
         self.assertEqual(response.status_code, 204)
+
+    def test_get_ration_for_location(self):
+        visit = {
+            "user_id": self.user,
+            "location_id": self.location,
+            "date": datetime.now(),
+            "ratio": "2"
+        }
+        Visit.objects.create(**visit)
+
+        user_dict2 = {
+            "username": "petr29",
+            "password": "password123",
+            "confirm_password": "password123",
+            "first_name": "Ivan",
+            "last_name": "Ivanov",
+            "email": "ivanov@mail.com",
+            "birth_date": "1991-01-04",
+            "country": "Russia",
+            "gender": "M"
+        }
+        user2 = User.objects.create_user(**user_dict2)
+
+        visit2 = {
+            "user_id": user2,
+            "location_id": self.location,
+            "date": datetime.now(),
+            "ratio": "6"
+        }
+        Visit.objects.create(**visit2)
+
+        response = self.client.get("/locations/1/ratio", {}, content_type="application/json",
+                                   HTTP_AUTHORIZATION=self.getJWTToken())
+
+        response_content = json.loads(response.content.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200, response_content)
+
+        self.assertEqual(response_content["count"], 2)
+        self.assertEqual(response_content["visitors"], [{"id": 1}, {"id": 2}])
+        self.assertEqual(response_content["avg"], 4.0)
