@@ -35,6 +35,9 @@ class UserDetails(APIView):
         except User.DoesNotExist:
             return HttpResponse(status=status.HTTP_404_NOT_FOUND)
 
+        if request.user.id != user.id:
+            return HttpResponse(status=status.HTTP_403_FORBIDDEN)
+
         data = JSONParser().parse(request)
         serializer = UserSerializer(user, data=data)
         if serializer.is_valid():
@@ -47,6 +50,10 @@ class UserDetails(APIView):
             user = User.objects.get(pk=pk)
         except User.DoesNotExist:
             return HttpResponse(status=status.HTTP_404_NOT_FOUND)
+
+        if request.user.id != user.id:
+            return HttpResponse(status=status.HTTP_403_FORBIDDEN)
+
         user.delete()
         return HttpResponse(status=status.HTTP_204_NO_CONTENT)
 

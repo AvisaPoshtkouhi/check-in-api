@@ -22,11 +22,6 @@ class JWTAuthTestCase(TestCase):
             "gender": "M"
         }
 
-        self.username = self.user_dict["username"]
-        self.email = self.user_dict["email"]
-        self.password = self.user_dict["password"]
-        first_name = self.user_dict["first_name"]
-        last_name = self.user_dict["last_name"]
         self.user = User.objects.create_user(**self.user_dict)
 
         jwt_payload_handler = utils.jwt_payload_handler
